@@ -1,0 +1,8 @@
+<kibana-panel ng-controller='durations' ng-init="init()">
+  <span ng-show="panel.spyable" class='spy panelextra pointer'>
+      <i bs-modal="'partials/inspector.html'" class="icon-eye-open"></i>
+  </span>
+  <div>
+  <li ng-repeat='series in data'>{{series.term}} : {{series.value}}</li>
+  </div>
+</kibana-panel>
