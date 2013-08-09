@@ -17,7 +17,7 @@ angular.module('kibana.durations', [])
     order: "count",
     style: {},
     spyable: true,
-    time_field: "taskname",
+    key_field: "taskname",
     value_field: "duration",
   };
   _.defaults($scope.panel,_d);
@@ -48,7 +48,7 @@ angular.module('kibana.durations', [])
     var _segment = _.isUndefined(segment) ? 0 : segment;
     var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
     var facet = $scope.ejs.TermStatsFacet('stats')
-      .keyField('taskname').valueField('duration')
+      .keyField($scope.panel.key_field).valueField($scope.panel.value_field)
       .order($scope.panel.order)
       .facetFilter(filterSrv.getBoolFilter(filterSrv.ids));
 
