@@ -3,6 +3,7 @@
       <i bs-modal="'partials/inspector.html'" class="icon-eye-open"></i>
   </span>
   <div>
+  <label class="small">Order</label> <select class="input-medium" ng-model="panel.order" ng-options="f for f in ['mean','count','min','max','total']"></select>
   <li ng-repeat='series in data'>{{series.term}} : {{series.value}}</li>
   </div>
 </kibana-panel>
