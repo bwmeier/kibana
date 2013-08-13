@@ -31,42 +31,38 @@ function($scope, $filter, querySrv, dashboard, filterSrv) {
     $scope.get_data();
   };
   
-  $scope.get_data = function(segment, query_id) {
+  $scope.get_data = function() {
     delete $scope.panel.error;
+
+    var identity = function (value) { return value; };
+    var durationToString = $filter('duration');
 
     // Make sure we have everything for the request to complete
     if(dashboard.indices.length === 0) {
       return;
     }
-    var _range = $scope.range = filterSrv.timeRange('min');
-    
-    if ($scope.panel.auto_int) {
-      $scope.panel.interval = kbn.secondsToHms(
-        kbn.calculate_interval(_range.from,_range.to,$scope.panel.resolution,0)/1000);
-    }
 
     $scope.panelMeta.loading = true;
-    var _segment = _.isUndefined(segment) ? 0 : segment;
-    var request = $scope.ejs.Request().indices(dashboard.indices[_segment]);
+    var order = $scope.panel.order;
+    var request = $scope.ejs.Request().indices(dashboard.indices);
     var facet = $scope.ejs.TermStatsFacet('stats')
       .keyField($scope.panel.key_field).valueField($scope.panel.value_field)
-      .order($scope.panel.order)
+      .order(ordering)
       .facetFilter(filterSrv.getBoolFilter(filterSrv.ids));
+    var transform = (order == 'count') ? identity : durationToString;
 
     request = request.facet(facet).size(0);
+
     $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
 
     request.doSearch().then(function(results){
-      var identity = function (value) { return value; };
-      var durationToString = $filter('duration');
-      var transform = ($scope.panel.order == 'count') ? identity : durationToString;
-
       $scope.panelMeta.loading = false;
       $scope.results = results.facets.stats.terms;
       $scope.data = _.map($scope.results, function(value) {
         return {
           term: value.term,
-          value: transform(value[$scope.panel.order]),
+          textvalue: transform(value[order]),
+          value: value[order],
         };
       });
     });

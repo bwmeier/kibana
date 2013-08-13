@@ -4,6 +4,6 @@
   </span>
   <div>
   <span class="large">Order: </span> <select class="input-medium" ng-model="panel.order" ng-change="get_data()" ng-options="f for f in ['mean','count','min','max','total']"></select>
-  <li ng-repeat='series in data'>{{series.term}} : {{series.value}}</li>
+  <li ng-repeat='series in data'>{{series.term}} : {{series.textvalue}}</li>
   </div>
 </kibana-panel>
