@@ -1,7 +1,8 @@
 'use strict';
 
 angular.module('kibana.durations', [])
-.controller('durations', ['$scope', 'querySrv', 'dashboard', 'filterSrv', function($scope, querySrv, dashboard, filterSrv) {
+.controller('durations', ['$scope', '$filter', 'querySrv', 'dashboard', 'filterSrv', 
+function($scope, $filter, querySrv, dashboard, filterSrv) {
   $scope.panelMeta = {
     status  : "Experimental",
     description : "Experimental durations panel"
@@ -56,14 +57,47 @@ angular.module('kibana.durations', [])
     $scope.inspector = angular.toJson(JSON.parse(request.toString()),true);
 
     request.doSearch().then(function(results){
+      var identity = function (value) { return value; };
+      var durationToString = $filter('duration');
+      var transform = ($scope.panel.order == 'count') ? identity : durationToString;
+
       $scope.panelMeta.loading = false;
       $scope.results = results.facets.stats.terms;
       $scope.data = _.map($scope.results, function(value) {
         return {
           term: value.term,
-          value: value[$scope.panel.order],
+          value: transform(value[$scope.panel.order]),
         };
       });
     });
   };
-}]);
+}])
+.filter('zeropad', function() {
+  return function (value, digits) {
+  	var result = value + "";
+	  while (result.length < digits) {
+		  result = "0" + result;
+  	}
+	  return result;
+  }
+})
+.filter('duration', function($filter) {
+  var zeropad = $filter('zeropad');
+  return function (value) {
+    var t = Math.round(value);
+    var s = "";
+    // milliseconds
+    var r = t % 1000;
+    t = (t - r) / 1000;
+    s = zeropad(r, 3);
+    // seconds
+    r = t % 60;
+    t = (t - r) / 60;
+    s = zeropad(r, 2) + "." + s;
+    // hours + minutes
+    r = t % 60;
+    t = (t - r) / 60;
+    s = t + ":" + zeropad(r, 2) + ":" + s;
+    return s;
+  }
+});
