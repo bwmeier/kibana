@@ -25,7 +25,10 @@ function($scope, $filter, querySrv, dashboard, filterSrv) {
 
   $scope.init = function() {
     $scope.$on('refresh',function(){
-      $scope.get_data();
+      if (!$scope.myRefresh) {
+        $scope.get_data();
+      }
+      $scope.myRefresh = false;
     });
 
     $scope.get_data();
@@ -65,7 +68,7 @@ function($scope, $filter, querySrv, dashboard, filterSrv) {
           value: value[order],
         };
       });
-      var current = querySrv.idsByMode('all');
+      var current = _.union(querySrv.idsByMode('all'));
       var existing = [];
       _.each(terms, function(t){
         var qString = $scope.panel.key_field + ':"' + t.term + '"';
@@ -83,6 +86,8 @@ function($scope, $filter, querySrv, dashboard, filterSrv) {
         querySrv.remove(id);
       });
       $scope.panel.queries.ids = querySrv.idsByMode('all');
+      console.log($scope.panel.queries.ids);
+      $scope.myRefresh = true;
       dashboard.refresh();
     });
   };
