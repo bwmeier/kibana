@@ -1,3 +1,7 @@
 node_modules
 .aws-config.json
 dist
+KibanaProject*
+web.*config
+bin
+obj
