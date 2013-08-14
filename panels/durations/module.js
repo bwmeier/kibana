@@ -47,7 +47,7 @@ function($scope, $filter, querySrv, dashboard, filterSrv) {
     var request = $scope.ejs.Request().indices(dashboard.indices);
     var facet = $scope.ejs.TermStatsFacet('stats')
       .keyField($scope.panel.key_field).valueField($scope.panel.value_field)
-      .order(ordering)
+      .order(order)
       .facetFilter(filterSrv.getBoolFilter(filterSrv.ids));
     var transform = (order == 'count') ? identity : durationToString;
 
@@ -57,14 +57,33 @@ function($scope, $filter, querySrv, dashboard, filterSrv) {
 
     request.doSearch().then(function(results){
       $scope.panelMeta.loading = false;
-      $scope.results = results.facets.stats.terms;
-      $scope.data = _.map($scope.results, function(value) {
+      var terms = results.facets.stats.terms;
+      $scope.data = _.map(terms, function(value) {
         return {
           term: value.term,
           textvalue: transform(value[order]),
           value: value[order],
         };
       });
+      var current = querySrv.idsByMode('all');
+      var existing = [];
+      _.each(terms, function(t){
+        var qString = $scope.panel.key_field + ':"' + t.term + '"';
+        var query = querySrv.findQuery(qString);
+        if (!query) {
+          querySrv.set({
+            query: qString,
+            alias: t.term,
+          });
+        } else {
+          existing.push(query.id);
+        }
+      });
+      _.each(_.difference(current, existing), function(id) {
+        querySrv.remove(id);
+      });
+      $scope.panel.queries.ids = querySrv.idsByMode('all');
+      dashboard.refresh();
     });
   };
 }])
