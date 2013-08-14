@@ -3,7 +3,30 @@
       <i bs-modal="'partials/inspector.html'" class="icon-eye-open"></i>
   </span>
   <div>
-  <span class="large">Order: </span> <select class="input-medium" ng-model="panel.order" ng-change="get_data()" ng-options="f for f in ['mean','count','min','max','total']"></select>
-  <li ng-repeat='series in data'>{{series.term}} : {{series.textvalue}}</li>
+  <span class="large">Order: </span> 
+  <select class="input-medium" ng-model="panel.order" ng-change="get_data()" ng-options="f for f in ['mean','count','min','max','total']"></select>
+  <!--<li ng-repeat='series in data'>{{series.label}} : {{series.data[0][1]}}</li>-->
+  <div terms-chart params="{{panel}}" style="position:relative"></div>
+
+  <table ng-style="panel.style" class="table table-striped table-condensed" >  
+    <thead>
+      <th>Term</th> <th>Count</th> <th>Average</br>Duration</th> <th>Maximum</br>Duration</th> <th>Minimum</br>Duration</th> <th>Total</br>Duration</th> <th>Action</th>
+    </thead>
+    <tr ng-repeat="term in data">
+      <td><span><i class="icon-circle" ng-style="{color:term.color}"></i></span> {{term.label}}</td>
+      <td>{{term.value.count}}</td>
+      <td>{{term.value.mean | duration}}</td>
+      <td>{{term.value.max | duration}}</td>
+      <td>{{term.value.min | duration}}</td>
+      <td>{{term.value.total | duration}}</td>
+      <td>
+        <span ng-hide="term.meta == 'other'">
+          <i class='icon-search pointer' ng-click="build_search(term)"></i> 
+          <i class='icon-ban-circle pointer' ng-click="build_search(term,true)"></i>
+        </span>
+      </td>
+    </tr>
+  </table>
+
   </div>
 </kibana-panel>
