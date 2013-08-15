@@ -104,6 +104,25 @@ function ($scope, $filter, querySrv, dashboard, filterSrv) {
             dashboard.refresh();
         });
     };
+
+    $scope.filter = function (term, negate) {
+        var filter = {
+            type: 'terms',
+            field: $scope.panel.key_field,
+            value: term.label,
+        }
+        var existing = _.where(filterSrv.getByType(filter.type), filter);
+        filter.mandate = (negate ? 'mustNot' : 'must');
+        if (!existing || existing.length == 0) {
+            filterSrv.set(filter);
+        } else {
+            filterSrv.remove(existing[0].id);
+            if (existing[0].mandate != filter.mandate) {
+                filterSrv.set(filter);
+            }
+        }
+        dashboard.refresh();
+    };
 }])
 .filter('zeropad', function () {
     return function (value, digits) {
@@ -133,7 +152,7 @@ function ($scope, $filter, querySrv, dashboard, filterSrv) {
         s = t + ":" + zeropad(r, 2) + ":" + s;
         return s;
     }
-}]).directive('termsChart', ['querySrv', 'filterSrv', 'dashboard', function (querySrv, filterSrv, dashboard) {
+}]).directive('durationsChart', ['querySrv', 'filterSrv', 'dashboard', function (querySrv, filterSrv, dashboard) {
     return {
         restrict: 'A',
         link: function (scope, elem, attrs, ctrl) {
@@ -173,72 +192,29 @@ function ($scope, $filter, querySrv, dashboard, filterSrv) {
                     // Populate element
                     try {
                         // Add plot to scope so we can build out own legend 
-                        if (scope.panel.chart === 'bar') {
-                            plot = $.plot(elem, chartData, {
-                                legend: { show: false },
-                                series: {
-                                    lines: { show: false, },
-                                    bars: { show: true, fill: 1, barWidth: 0.8, horizontal: false },
-                                    shadowSize: 1
-                                },
-                                yaxis: { show: true, min: 0, color: "#c8c8c8" },
-                                xaxis: { show: false },
-                                grid: {
-                                    borderWidth: 0,
-                                    borderColor: '#eee',
-                                    color: "#eee",
-                                    hoverable: true,
-                                    clickable: true
-                                },
-                                colors: colorMap
-                            });
-                        }
-                        if (scope.panel.chart === 'pie') {
-                            var labelFormat = function (label, series) {
-                                return '<div ng-click="build_search(panel.field,\'' + label + '\')' +
-                                  ' "style="font-size:8pt;text-align:center;padding:2px;color:white;">' +
-                                  label + '<br/>' + Math.round(series.percent) + '%</div>';
-                            };
-
-                            plot = $.plot(elem, chartData, {
-                                legend: { show: false },
-                                series: {
-                                    pie: {
-                                        innerRadius: scope.panel.donut ? 0.4 : 0,
-                                        tilt: scope.panel.tilt ? 0.45 : 1,
-                                        radius: 1,
-                                        show: true,
-                                        combine: {
-                                            color: '#999',
-                                            label: 'The Rest'
-                                        },
-                                        stroke: {
-                                            width: 0
-                                        },
-                                        label: {
-                                            show: scope.panel.labels,
-                                            radius: 2 / 3,
-                                            formatter: labelFormat,
-                                            threshold: 0.1
-                                        }
-                                    }
-                                },
-                                //grid: { hoverable: true, clickable: true },
-                                grid: { hoverable: true, clickable: true },
-                                colors: colorMap
-                            });
-                        }
-
-                        // Populate legend
-                        if (elem.is(":visible")) {
-                            scripts.wait(function () {
-                                scope.legend = plot.getData();
-                                if (!scope.$$phase) {
-                                    scope.$apply();
-                                }
-                            });
-                        }
-
+                        plot = $.plot(elem, chartData, {
+                            legend: { show: false },
+                            series: {
+                                lines: { show: false, },
+                                bars: { show: true, fill: 1, barWidth: 0.8, horizontal: false },
+                                shadowSize: 1
+                            },
+                            yaxis: {
+                                show: true,
+                                min: 0,
+                                color: "#c8c8c8",
+                                tickFormatter: scope.transform,
+                            },
+                            xaxis: { show: false },
+                            grid: {
+                                borderWidth: 0,
+                                borderColor: '#eee',
+                                color: "#eee",
+                                hoverable: true,
+                                clickable: true
+                            },
+                            colors: colorMap
+                        });
                     } catch (e) {
                         elem.text(e);
                     }
@@ -264,14 +240,13 @@ function ($scope, $filter, querySrv, dashboard, filterSrv) {
 
             elem.bind("plotclick", function (event, pos, object) {
                 if (object) {
-                    scope.build_search(scope.data[object.seriesIndex]);
+                    scope.filter(scope.data[object.seriesIndex]);
                 }
             });
 
             elem.bind("plothover", function (event, pos, item) {
                 if (item) {
-                    var value = scope.panel.chart === 'bar' ?
-                      item.datapoint[1] : item.datapoint[1][0][1];
+                    var value = item.datapoint[1];
                     tt(pos.pageX, pos.pageY,
                       "<div style='vertical-align:middle;border-radius:10px;display:inline-block;background:" +
                       item.series.color + ";height:20px;width:20px'></div> " + item.series.label +
