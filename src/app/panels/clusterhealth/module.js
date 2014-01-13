@@ -19,7 +19,7 @@ define([
   var module = angular.module('kibana.panels.health', []);
   app.useModule(module);
   
-  module.controller('health', ['$scope', function($scope) {
+  module.controller('clusterhealth', ['$scope', function($scope) {
 
     $scope.panelMeta = {
       status  : "Experimental",
