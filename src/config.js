@@ -50,6 +50,7 @@ function (Settings) {
      */
     panel_names: [
       'histogram',
+      'clusterhealth',
       'map',
       'pie',
       'table',
