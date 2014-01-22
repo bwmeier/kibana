@@ -11,12 +11,10 @@ define([
   'angular',
   'app',
   'underscore',
-  'jquery',
-  'kbn',
 ], function(angular, app, _) {
   'use strict';
   
-  var module = angular.module('kibana.panels.health', []);
+  var module = angular.module('kibana.panels.clusterhealth', []);
   app.useModule(module);
   
   module.controller('clusterhealth', ['$scope', function($scope) {
@@ -37,11 +35,10 @@ define([
     _.defaults($scope, _d);
 
     $scope.init = function() {
-      $scope.$on('refresh', function() {
+        $scope.$on('refresh', function () {
+            $scope.get_data();
+        });
         $scope.get_data();
-      });
-
-      $scope.get_data();
     };
 
     $scope.get_data = function() {
