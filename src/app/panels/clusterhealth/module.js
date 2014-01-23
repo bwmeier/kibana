@@ -35,10 +35,10 @@ define([
     _.defaults($scope, _d);
 
     $scope.init = function() {
-        $scope.$on('refresh', function () {
-            $scope.get_data();
-        });
+      $scope.$on('refresh', function () {
         $scope.get_data();
+      });
+      $scope.get_data();
     };
 
     $scope.get_data = function() {
