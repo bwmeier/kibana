@@ -5,10 +5,10 @@
         <th style="white-space: nowrap; text-align: center" ng-repeat="date in dates">
             {{date.format('dddd')}}<br />{{date | shortDate}}
         </th>
-        <tr ng-repeat="key in panel.reportKeys">
+        <tr ng-repeat="key in panel.reportKeys | onlydefined">
             <td style="white-space: nowrap; text-align: left; font-weight:bold">{{key.label}}</td>
-            <td style="white-space: nowrap; text-align: center" ng-repeat="date in dates" ng-style="missing(panel.details[date.format('YYYY-MM-DD')][key.key])">
-                {{panel.details[date.format('YYYY-MM-DD')][key.key] | missing}}
+            <td style="white-space: nowrap; text-align: center" ng-repeat="date in dates | shortDate" ng-style="missing(panel.details[date][key.key])">
+                {{panel.details[date][key.key] | missing}}
             </td>
         </tr>
     </table>

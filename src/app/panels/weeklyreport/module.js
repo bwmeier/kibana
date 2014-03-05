@@ -171,7 +171,17 @@ function (angular, app, _, kbn, moment) {
 
   module.filter('shortDate', function () {
     return function (input) {
-      return moment(input).format('YYYY-MM-DD');
+      if (_.isArray(input)) {
+        return _.map(input, function (i) { return moment(i).format('YYYY-MM-DD'); });
+      } else {
+        return moment(input).format('YYYY-MM-DD');
+      }
+    };
+  });
+
+  module.filter('onlydefined', function () {
+    return function (input) {
+      return _.filter(input, function (i) { return i.key; });
     };
   });
 });
