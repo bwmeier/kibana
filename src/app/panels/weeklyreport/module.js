@@ -11,32 +11,10 @@ function (angular, app, _, kbn, moment) {
   var module = angular.module('kibana.panels.weeklyreport', []);
   app.useModule(module);
 
-  function stableJSONString(obj) {
-    var out;
-    if (_.isObject(obj)) {
-      var keys = _.keys(obj).sort();
-      out = '{';
-      _.each(keys, function (k, i) {
-        if (i > 0) out += ',';
-        out += k + ':' + stableJSONString(obj[k]);
-      });
-      out += '}';
-    } else if (_.isArray(obj)) {
-      out = '['
-      _.each(obj, function (val, i) {
-        if (i > 0) out += ',';
-        out += stableJSONString(val);
-      });
-      out += ']'
-    } else if (_.isString(obj)) {
-      out = '"' + obj + '"';
-    } else if (obj) {
-      out = '' + obj;
-    }
-    return out;
-  }
-
   module.controller('weeklyreport', ['$scope', 'filterSrv', 'dashboard', function ($scope, filterSrv, dashboard) {
+
+    var ejs = $scope.ejs;
+
     var _d = {
       spyable: true,
       flagMissing: true,
@@ -61,12 +39,12 @@ function (angular, app, _, kbn, moment) {
 
     $scope.panelMeta = {
       modals: [
-          {
-            description: "Inspect",
-            icon: "icon-info-sign",
-            partial: "app/partials/inspector.html",
-            show: $scope.panel.spyable,
-          },
+        {
+          description: "Inspect",
+          icon: "icon-info-sign",
+          partial: "app/partials/inspector.html",
+          show: $scope.panel.spyable,
+        },
       ],
       status: "Experimental",
       description: "PROS CloudOps weekly report template",
@@ -105,16 +83,18 @@ function (angular, app, _, kbn, moment) {
           .query(ejs.FilteredQuery(ejs.MatchAllQuery(), filter).cache(true));
 
       filter = ejs.OrFilter([
-          ejs.TypeFilter('database'),
-          ejs.TypeFilter('duration'),
-          ejs.AndFilter([
-              ejs.TypeFilter('availability2'),
-              ejs.QueryFilter(ejs.QueryStringQuery('state:OK')),
-          ]).cache(true),
+        ejs.TypeFilter('database'),
+        ejs.TypeFilter('duration'),
+        ejs.AndFilter([
+          ejs.TypeFilter('availability2'),
+          ejs.QueryFilter(ejs.QueryStringQuery('state:OK')),
+        ]).cache(true),
       ]);
+      var clientQueryString = 'source.organization:"' + $scope.panel.organization
+        + '" AND source.environment:"' + $scope.panel.environment + '"';
       filter = ejs.AndFilter([
-          filter,
-          ejs.QueryFilter(ejs.QueryStringQuery('source.organization:"' + $scope.panel.organization + '" AND source.environment:"' + $scope.panel.environment + '"')),
+        filter,
+        ejs.QueryFilter(ejs.QueryStringQuery(clientQueryString)),
       ]);
       request.filter(filter);
 
@@ -124,7 +104,7 @@ function (angular, app, _, kbn, moment) {
         $scope.panelMeta.loading = false;
         $scope.results = results;
         $scope.panel.count = results.hits.total;
-        var sources = [];
+
         var data = _.map(results.hits.hits, function (h) {
           var src = _.clone(h._source);
           src.type = h._type;
@@ -140,7 +120,7 @@ function (angular, app, _, kbn, moment) {
           _.extend(allKeys, memo[k]);
           return memo;
         }, {});
-        var kl = $scope.panel.keyList = _.keys(allKeys).sort();
+        $scope.panel.keyList = _.keys(allKeys).sort();
         $scope.panel.details = summary;
       });
     };
@@ -148,19 +128,19 @@ function (angular, app, _, kbn, moment) {
     function summarizeEvents(events) {
       return _.reduce(events, function (memo, value) {
         switch (value.type) {
-          case 'duration':
-          case 'database':
-            _.each(_.keys(value.fields), function (k) {
-              var temp = Math.round(value.fields[k]);
-              memo[value.type + ':' + k] = isNaN(temp) ? value.fields[k] : temp;
-            });
-            break;
-          case 'availability2':
-            memo[value.service + ':' + value.reportType] = value.percent_str;
-            break;
-          default:
-            console.log("WTF?", value);
-        };
+        case 'duration':
+        case 'database':
+          _.each(_.keys(value.fields), function (k) {
+            var temp = Math.round(value.fields[k]);
+            memo[value.type + ':' + k] = isNaN(temp) ? value.fields[k] : temp;
+          });
+          break;
+        case 'availability2':
+          memo[value.service + ':' + value.reportType] = value.percent_str;
+          break;
+        default:
+          console.log("WTF?", value);
+        }
         return memo;
       }, {});
     }
@@ -181,9 +161,11 @@ function (angular, app, _, kbn, moment) {
 
   module.filter('missing', function () {
     return function (input) {
-      if (_.isUndefined(input))
+      if (_.isUndefined(input)) {
         return 'missing';
-      else return input;
+      } else {
+        return input;
+      }
     };
   });
 
