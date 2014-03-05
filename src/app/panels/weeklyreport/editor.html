@@ -1,8 +1,28 @@
 ﻿<div class="row-fluid">
     <div class="span6 section">
         <h5>Options</h5>
+        <div class="editor-option">
+            <label class="small">Client (Organization)</label>
+            <input type="text" class="input-medium" ng-model="panel.organization" ng-change="set_refresh(true)" bs-typeahead="clients">
+        </div>
+        <div class="editor-option">
+            <label class="small">Environment</label>
+            <input type="text" class="input-medium" ng-model="panel.environment" ng-change="set_refresh(true)" bs-typeahead="environments">
+        </div>
+      <div class="editor-option">
+        <label class="small">Highlight Missing</label><input type="checkbox" ng-model="panel.flagMissing" ng-checked="panel.flagMissing">
+      </div>
     </div>
-    <div class="section span6">
-        <h5>Data</h5>
+    <div class="span6 section">
+        <h5>Attributes</h5>
+        <div class="editor-option">
+            <table class="table table-condensed">
+                <thead><tr><th>Key</th><th>Label</th></tr></thead>
+                <tr ng-repeat="attr in panel.reportKeys">
+                    <td><input type="text" class="input-medium" ng-model="attr.key" ng-change="set_refresh(true)" /></td>
+                    <td><input type="text" class="input-large" ng-model="attr.label" ng-change="set_refresh(true)" /></td>
+                </tr>
+            </table>
+        </div>
     </div>
 </div>

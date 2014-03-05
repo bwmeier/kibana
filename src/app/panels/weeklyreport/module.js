@@ -39,7 +39,7 @@ function (angular, app, _, kbn, moment) {
     module.controller('weeklyreport', ['$scope', 'filterSrv', 'dashboard', function ($scope, filterSrv, dashboard) {
         var _d = {
             spyable: true,
-            flagMissing: 'red',
+            flagMissing: true,
             reportKeys: [
               { key: 'duration:total_str', label: "Time taken - Total Batch"},
               { key: 'duration:premerge_str', label: "MergeAnalytics Complete"},
@@ -54,7 +54,8 @@ function (angular, app, _, kbn, moment) {
               { key: 'OnD Status:customer', label: "OnD Customer Availability %"},
               { key: 'GRMS Status:customer', label: "GRMS Customer Availability %"},
             ],
-
+            organization: 'Avianca Airlines',
+            environment: 'PROD',
         };
         _.defaults($scope.panel, _d);
 
@@ -77,7 +78,7 @@ function (angular, app, _, kbn, moment) {
         };
 
         $scope.missing = function (value) {
-            if (this.panel.flagMissing && _.isUndefined(value)) return { color: this.panel.flagMissing };
+            if (this.panel.flagMissing && _.isUndefined(value)) return { color: 'red' };
             return {};
         };
 
@@ -96,17 +97,22 @@ function (angular, app, _, kbn, moment) {
             var filter = ejs.RangeFilter('timestamp').gte(begin.toISOString()).lte(end.toISOString());
 
             var request = $scope.ejs.Request()
-                .indices(dashboard.indices);
-            request.size(1000);
-            request.sort(ejs.Sort('timestamp').desc());
-            request.query(ejs.FilteredQuery(ejs.MatchAllQuery(), filter).cache(true));
+                .indices(dashboard.indices)
+                .size(1000)
+                .sort(ejs.Sort('timestamp').desc())
+                .query(ejs.FilteredQuery(ejs.MatchAllQuery(), filter).cache(true));
+
             filter = ejs.OrFilter([
                 ejs.TypeFilter('database'),
                 ejs.TypeFilter('duration'),
                 ejs.AndFilter([
                     ejs.TypeFilter('availability2'),
-                    ejs.QueryFilter(ejs.QueryStringQuery('state:OK AND host:\"at-app1.prosrm.com\"')),
+                    ejs.QueryFilter(ejs.QueryStringQuery('state:OK')),
                 ]).cache(true),
+            ]);
+            filter = ejs.AndFilter([
+                filter,
+                ejs.QueryFilter(ejs.QueryStringQuery('source.organization:"' + $scope.panel.organization + '" AND source.environment:"' + $scope.panel.environment + '"')),
             ]);
             request.filter(filter);
 
@@ -116,10 +122,8 @@ function (angular, app, _, kbn, moment) {
                 $scope.panelMeta.loading = false;
                 $scope.results = results;
                 $scope.panel.count = results.hits.total;
-                var filtered = _.filter(results.hits.hits, function (h) {
-                    return h._type != 'availability2' || h._source.host == 'at-app1.prosrm.com';
-                });
-                var data = _.map(filtered, function (h) {
+                var sources = [];
+                var data = _.map(results.hits.hits, function (h) {
                     var src = _.clone(h._source);
                     src.type = h._type;
                     var date = moment(src.timestamp);
@@ -162,13 +166,22 @@ function (angular, app, _, kbn, moment) {
         $scope.populate_modal = function (request) {
             $scope.inspector = angular.toJson(JSON.parse(request.toString()), true);
         };
+
+        $scope.set_refresh = function (state) { $scope.refresh = state; };
+
+        $scope.close_edit = function () {
+            if ($scope.refresh) {
+                $scope.getData();
+            }
+            $scope.refresh = false;
+        };
     }]);
 
     module.filter('missing', function () {
         return function (input) {
-            if (input)
-                return input;
-            else return 'missing';
+            if (_.isUndefined(input))
+                return 'missing';
+            else return input;
         };
     });
 
