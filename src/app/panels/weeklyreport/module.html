@@ -1,0 +1,15 @@
+﻿<div ng-controller="weeklyreport" ng-init="init()">
+    <h1></h1>
+    <table class="table-hover table table-condensed" style="font-size: 10pt">
+        <th></th>
+        <th style="white-space: nowrap; text-align: center" ng-repeat="date in dates">
+            {{date.format('dddd')}}<br />{{date | shortDate}}
+        </th>
+        <tr ng-repeat="key in panel.reportKeys">
+            <td style="white-space: nowrap; text-align: left; font-weight:bold">{{key.label}}</td>
+            <td style="white-space: nowrap; text-align: center" ng-repeat="date in dates" ng-style="missing(panel.details[date.format('YYYY-MM-DD')][key.key])">
+                {{panel.details[date.format('YYYY-MM-DD')][key.key] | missing}}
+            </td>
+        </tr>
+    </table>
+</div>
