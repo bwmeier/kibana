@@ -16,11 +16,12 @@
     <div class="span6 section">
         <h5>Attributes</h5>
         <div class="editor-option">
-            <table class="table table-condensed">
+            <table class="table-condensed">
                 <thead><tr><th>Key</th><th>Label</th></tr></thead>
                 <tr ng-repeat="attr in panel.reportKeys">
                     <td><input type="text" class="input-medium" ng-model="attr.key" ng-change="set_refresh(true)" /></td>
                     <td><input type="text" class="input-large" ng-model="attr.label" ng-change="set_refresh(true)" /></td>
+                    <td><i class="icon-remove pointer"></i></td>
                 </tr>
             </table>
         </div>
